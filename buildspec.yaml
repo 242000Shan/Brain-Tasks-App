@@ -1,0 +1,28 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/p1z8m3s1
+
+  build:
+    commands:
+      - echo Building Docker image...
+      - docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+      - docker build -t static-app:latest .
+
+  post_build:
+    commands:
+      - echo Tagging Docker image...
+      - docker tag static-app:latest public.ecr.aws/p1z8m3s1/static-app-public
+      - echo Pushing Docker image to ECR...
+      - docker push public.ecr.aws/p1z8m3s1/static-app-public
+      - echo Writing image definitions file...
+      - printf '[{"name":"static-app","imageUri":"%s"}]' public.ecr.aws/p1z8m3s1/static-app-public > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - deployment.yaml
+    - service.yaml
