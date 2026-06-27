@@ -9,29 +9,29 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Build Docker Image') {
             steps {
-                sh 'npm install'
+                sh 'sudo docker build -t brain-task-app .'
             }
         }
 
-        stage('Run App') {
+        stage('Deploy Container') {
             steps {
                 sh '''
-                    pm2 stop brain-task-app || true
-                    pm2 start index.js --name brain-task-app
+                sudo docker stop brain-task-app || true
+                sudo docker rm brain-task-app || true
+                sudo docker run -d --name brain-task-app -p 82:80 brain-task-app
                 '''
             }
         }
-
     }
 
     post {
         success {
-            echo 'App deployed successfully!'
+            echo 'Application deployed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Check logs above.'
+            echo 'Pipeline failed. Check the console output.'
         }
     }
 }
